@@ -1,22 +1,21 @@
 package devops;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
-
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.TreeMap;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Unit tests for Feature Branch Report App.
@@ -38,16 +37,17 @@ public class FeatureBranchReportTest {
     @After
     public void tearDown() throws Exception {
         // Stop Server
-        server.stop();
+        if (server != null) {
+            server.stop();
+        }
     }
     
     /**
      * Test the report
-     * @throws IOException 
-     * @throws MalformedURLException 
+     * @throws IOException during retrieval of info for report or during printing of report.
      */
     @Test
-    public void testReport() throws MalformedURLException, IOException {
+    public void testReport() throws IOException {
         
         final FeatureBranchReport app = new FeatureBranchReport() {
             public Collection<String> getFeatureBranches() {
@@ -80,11 +80,11 @@ public class FeatureBranchReportTest {
         final String report = baos.toString("UTF-8");
         
         assertTrue(report.contains("feature/abc/TEST-123"));
-        // Could use some more tests
+        // TODO Could use some more tests
     }
     
     @Test
-    public void testGetFeatureBranches() throws MalformedURLException, IOException {
+    public void testGetFeatureBranches() throws IOException {
         final FeatureBranchReport app = new FeatureBranchReport() {
             public String getScmBaseUrl() {
                 return "http://localhost:" + TEST_PORT + "/scm";
@@ -103,7 +103,7 @@ public class FeatureBranchReportTest {
     }
 
     @Test
-    public void testGetBuildStatuses() throws MalformedURLException, IOException {
+    public void testGetBuildStatuses() throws IOException {
         final FeatureBranchReport app = new FeatureBranchReport() {
             public String getCIBaseUrl() {
                 return "http://localhost:" + TEST_PORT + "/ci";

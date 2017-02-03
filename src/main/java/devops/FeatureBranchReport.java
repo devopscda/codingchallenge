@@ -1,17 +1,16 @@
 package devops;
 
+import com.google.gson.Gson;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
-
-import com.google.gson.Gson;
 
 /**
  * Read from our SCM and CI servers and report feature branch statuses.
@@ -21,7 +20,7 @@ public class FeatureBranchReport {
 
     private final Gson gson = new Gson();
 
-    public static void main(String[] args) throws MalformedURLException, IOException {
+    public static void main(String[] args) throws IOException {
 
         final FeatureBranchReport app = new FeatureBranchReport();
         
@@ -38,7 +37,7 @@ public class FeatureBranchReport {
         return "http://ci-api.example.com";
     }
 
-    public void printFeatureBranchBuildReport(final PrintStream out) throws MalformedURLException, IOException {
+    public void printFeatureBranchBuildReport(final PrintStream out) throws IOException {
 
         final Collection<String> branches = getFeatureBranches();
         final Map<String, String> statuses = getCIBuildStatuses();
@@ -65,10 +64,9 @@ public class FeatureBranchReport {
     /**
      * Retrieve feature branch names from SCM server.
      * @return Collection of feature branch names
-     * @throws MalformedURLException
-     * @throws IOException
+     * @throws IOException when data cannot be retrieved from the URL
      */
-    public Collection<String> getFeatureBranches() throws MalformedURLException, IOException {
+    public Collection<String> getFeatureBranches() throws IOException {
         
         final HttpURLConnection http = (HttpURLConnection)new URL(getScmBaseUrl() + "/featureBranches").openConnection();
         http.connect();
@@ -88,10 +86,9 @@ public class FeatureBranchReport {
     /**
      * Retrieve statuses of continuous integration builds.
      * @return Map of job name to status
-     * @throws MalformedURLException
-     * @throws IOException
+     * @throws IOException when data cannot be retrieved from the URL
      */
-    public Map<String, String> getCIBuildStatuses() throws MalformedURLException, IOException {
+    public Map<String, String> getCIBuildStatuses() throws IOException {
         
         final HttpURLConnection http = (HttpURLConnection)new URL(getCIBaseUrl() + "/buildStatuses").openConnection();
         http.connect();
