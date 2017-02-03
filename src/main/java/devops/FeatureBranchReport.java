@@ -1,6 +1,7 @@
 package devops;
 
 import com.google.gson.Gson;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -48,8 +49,8 @@ public class FeatureBranchReport {
         out.println("+----------------------------------------+-----------+");
         for (final String branch : branches) {
             String status = NOT_BUILT;
-            if (statuses.keySet().contains(prepareBranchName(branch))) {
-                status = statuses.get(prepareBranchName(branch));
+            if (statuses.keySet().contains(prepareBuildName(branch))) {
+                status = statuses.get(prepareBuildName(branch));
             }
             final StringBuilder sb = new StringBuilder();
             sb.append("| ");
@@ -62,8 +63,22 @@ public class FeatureBranchReport {
         out.println("+----------------------------------------+-----------+");
     }
 
-    static String prepareBranchName(String branch) {
+    /**
+     * Prepare branch names to match build names.
+     * @param branch name of branch
+     * @return replaces all '/' with '-'
+     */
+    static String prepareBuildName(String branch) {
         return branch.replace('/', '-');
+    }
+
+    // not really a good idea after all but for consistencies sake
+    static String reverseBuildName(String build) {
+        int lastHyphen = build.lastIndexOf('-');
+        String branchName = build.replace('-', '/').substring(0, lastHyphen);
+        branchName += '-';
+        branchName += build.replace('-', '/').substring(lastHyphen + 1);
+        return branchName;
     }
 
     /**

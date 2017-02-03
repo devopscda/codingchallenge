@@ -65,36 +65,74 @@ public class FeatureBranchReportTest {
 
             public Map<String, String> getCIBuildStatuses() {
                 final Map<String, String> statuses = new TreeMap<>();
-                
-                statuses.put("feature-abc-TEST-122", "SUCCESS");
+
+                // NOTE XXX see below tests
+                //statuses.put("feature-abc-TEST-122", "SUCCESS");
                 statuses.put("feature-abc-TEST-123", "SUCCESS");
                 statuses.put("feature-abc-TEST-124", "FAILURE");
                 
                 return statuses;
             }
         };
-        
+
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        
         app.printFeatureBranchBuildReport(new PrintStream(baos));
-        
         final String report = baos.toString("UTF-8");
+
+        testReports(app.getFeatureBranches(), app.getCIBuildStatuses(), report);
+    }
+
+    @Test
+    public void testReportFromWebApp() throws IOException {
+        final FeatureBranchReport app = new FeatureBranchReport() {
+            public String getScmBaseUrl() {
+                return "http://localhost:" + TEST_PORT + "/scm";
+            }
+            public String getCIBaseUrl() {
+                return "http://localhost:" + TEST_PORT + "/ci";
+            }
+        };
+
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        app.printFeatureBranchBuildReport(new PrintStream(baos));
+        final String report = baos.toString("UTF-8");
+        testReports(app.getFeatureBranches(), app.getCIBuildStatuses(), report);
+    }
+
+
+    private void testReports(Collection<String> branches, Map<String, String> ciBuildStatuses, String report) {
         // sanity checks
         assertNotNull(report);
         assertFalse(report.isEmpty());
 
+        // happy paths
         // every feature branch shows up in the report
-        app.getFeatureBranches().forEach(branch -> assertTrue(report.contains(branch)));
+        branches.forEach(branch -> assertTrue(report.contains(branch)));
         // every status value
-        app.getCIBuildStatuses().values().stream().distinct().forEach(status -> assertTrue(report.contains(status)));
+        ciBuildStatuses.values().stream().distinct().forEach(status -> assertTrue(report.contains(status)));
         // number of NOT_BUILT
         int notBuiltCount = 0;
-        for (String branch : app.getFeatureBranches()) {
-            if (!app.getCIBuildStatuses().containsKey(FeatureBranchReport.prepareBranchName(branch))) {
+        for (String branch : branches) {
+            if (!ciBuildStatuses.containsKey(FeatureBranchReport.prepareBuildName(branch))) {
                 notBuiltCount++;
             }
         }
         assertEquals(notBuiltCount, StringUtils.countMatches(report, NOT_BUILT));
+
+        // TODO confirm: is it possible to have a CI build name that does not have a known feature branch?
+        ciBuildStatuses.keySet().forEach(
+                b -> assertTrue(branches.contains(FeatureBranchReport.reverseBuildName(b))));
+
+        // negative tests
+        // random
+        assertFalse(report.contains("feature-abc-TEST-122"));
+        assertFalse(report.contains("feature/abc/TEST/122"));
+        assertFalse(report.contains("feature/abc/TEST-12３"));
+
+        // status build names not in report -- different than branch names
+        ciBuildStatuses.keySet().forEach(statusBranch -> assertFalse(report.contains(statusBranch)));
+        branches.forEach(
+                branch -> assertFalse(report.contains(FeatureBranchReport.prepareBuildName(branch))));
     }
     
     @Test
