@@ -19,6 +19,7 @@ import java.util.TreeMap;
 public class FeatureBranchReport {
 
     private final Gson gson = new Gson();
+    static final String NOT_BUILT = "NOT BUILT";
 
     public static void main(String[] args) throws IOException {
 
@@ -46,9 +47,9 @@ public class FeatureBranchReport {
         out.println("| Feature Branch                         | Status    |");
         out.println("+----------------------------------------+-----------+");
         for (final String branch : branches) {
-            String status = "NOT BUILT";
-            if (statuses.keySet().contains(branch.replace('/', '-'))) {
-                status = statuses.get(branch.replace('/', '-'));
+            String status = NOT_BUILT;
+            if (statuses.keySet().contains(prepareBranchName(branch))) {
+                status = statuses.get(prepareBranchName(branch));
             }
             final StringBuilder sb = new StringBuilder();
             sb.append("| ");
@@ -59,6 +60,10 @@ public class FeatureBranchReport {
             out.println(sb.toString());
         }
         out.println("+----------------------------------------+-----------+");
+    }
+
+    static String prepareBranchName(String branch) {
+        return branch.replace('/', '-');
     }
 
     /**
@@ -73,7 +78,7 @@ public class FeatureBranchReport {
 
         @SuppressWarnings("unchecked")
         Collection<Object> objects = gson.fromJson(new InputStreamReader(http.getInputStream()), Collection.class);
-        final Collection<String> branches = new ArrayList<String>();
+        final Collection<String> branches = new ArrayList<>();
         for (final Object object : objects) {
             if (object instanceof String) {
                 branches.add((String)object);
@@ -95,7 +100,7 @@ public class FeatureBranchReport {
 
         @SuppressWarnings("unchecked")
         Map<String, Object> objects = gson.fromJson(new InputStreamReader(http.getInputStream()), Map.class);
-        final Map<String, String> statuses = new TreeMap<String, String>();
+        final Map<String, String> statuses = new TreeMap<>();
         for (final String key : objects.keySet()) {
             if (objects.get(key) instanceof String) {
                 statuses.put(key, (String)objects.get(key));

@@ -1,5 +1,6 @@
 package devops;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.junit.After;
@@ -14,8 +15,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static devops.FeatureBranchReport.NOT_BUILT;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for Feature Branch Report App.
@@ -51,7 +52,7 @@ public class FeatureBranchReportTest {
         
         final FeatureBranchReport app = new FeatureBranchReport() {
             public Collection<String> getFeatureBranches() {
-                final Collection<String> branches = new ArrayList<String>();
+                final Collection<String> branches = new ArrayList<>();
                 
                 branches.add("feature/abc/TEST-123");
                 branches.add("feature/abc/TEST-124");
@@ -63,7 +64,7 @@ public class FeatureBranchReportTest {
             }
 
             public Map<String, String> getCIBuildStatuses() {
-                final Map<String, String> statuses = new TreeMap<String, String>();
+                final Map<String, String> statuses = new TreeMap<>();
                 
                 statuses.put("feature-abc-TEST-122", "SUCCESS");
                 statuses.put("feature-abc-TEST-123", "SUCCESS");
@@ -78,9 +79,22 @@ public class FeatureBranchReportTest {
         app.printFeatureBranchBuildReport(new PrintStream(baos));
         
         final String report = baos.toString("UTF-8");
-        
-        assertTrue(report.contains("feature/abc/TEST-123"));
-        // TODO Could use some more tests
+        // sanity checks
+        assertNotNull(report);
+        assertFalse(report.isEmpty());
+
+        // every feature branch shows up in the report
+        app.getFeatureBranches().forEach(branch -> assertTrue(report.contains(branch)));
+        // every status value
+        app.getCIBuildStatuses().values().stream().distinct().forEach(status -> assertTrue(report.contains(status)));
+        // number of NOT_BUILT
+        int notBuiltCount = 0;
+        for (String branch : app.getFeatureBranches()) {
+            if (!app.getCIBuildStatuses().containsKey(FeatureBranchReport.prepareBranchName(branch))) {
+                notBuiltCount++;
+            }
+        }
+        assertEquals(notBuiltCount, StringUtils.countMatches(report, NOT_BUILT));
     }
     
     @Test
